@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <rthw.h>
 #include <rtthread.h>
+#include "stm32f1xx_hal.h"
+#include "usart.h"
 
 #define _SCB_BASE       (0xE000E010UL)
 #define _SYSTICK_CTRL   (*(rt_uint32_t *)(_SCB_BASE + 0x0))
@@ -68,7 +70,9 @@ void rt_hw_board_init()
     
     /* System Tick Configuration */
     _SysTick_Config(SystemCoreClock / RT_TICK_PER_SECOND);
-
+		HAL_Init();
+		MX_USART1_UART_Init();
+	  
     /* Call components board initial (use INIT_BOARD_EXPORT()) */
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();
@@ -78,6 +82,44 @@ void rt_hw_board_init()
     rt_system_heap_init(rt_heap_begin_get(), rt_heap_end_get());
 #endif
 }
+
+void rt_hw_console_output(const char *str)
+{
+    rt_size_t i = 0, size = 0;
+    char a = '\r';
+
+    __HAL_UNLOCK(&huart1);
+
+    size = rt_strlen(str);
+    for (i = 0; i < size; i++)
+    {
+        if (*(str + i) == '\n')
+        {
+            HAL_UART_Transmit(&huart1, (uint8_t *)&a, 1, 1);
+        }
+        HAL_UART_Transmit(&huart1, (uint8_t *)(str + i), 1, 1);
+    }
+}
+
+RT_WEAK char rt_hw_console_getchar(void)
+{
+    int ch = -1;
+
+    if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE) != RESET)
+    {
+        ch = huart1.Instance->DR & 0xff;
+    }
+    else
+    {
+        if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_ORE) != RESET)
+        {
+            __HAL_UART_CLEAR_OREFLAG(&huart1);
+        }
+        rt_thread_mdelay(10);
+    }
+    return ch;
+}
+
 
 void SysTick_Handler(void)
 {
@@ -89,3 +131,4 @@ void SysTick_Handler(void)
     /* leave interrupt */
     rt_interrupt_leave();
 }
+

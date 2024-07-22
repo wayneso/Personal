@@ -9,6 +9,7 @@
 
 #include <rthw.h>
 #include <rtconfig.h>
+#include <rtthread.h>
 
 #ifndef RT_USING_FINSH
 #error Please uncomment the line <#include "finsh_config.h"> in the rtconfig.h 
@@ -16,15 +17,11 @@
 
 #ifdef RT_USING_FINSH
 
-RT_WEAK char rt_hw_console_getchar(void)
+static void reboot(rt_uint8_t argc, char **argv)
 {
-    /* Note: the initial value of ch must < 0 */
-    int ch = -1;
-
-#error "TODO 4: Read a char from the uart and assign it to 'ch'."
-
-    return ch;
+    rt_hw_cpu_reset();
 }
+FINSH_FUNCTION_EXPORT_ALIAS(reboot, __cmd_reboot, Reboot System);
 
 #endif /* RT_USING_FINSH */
 
