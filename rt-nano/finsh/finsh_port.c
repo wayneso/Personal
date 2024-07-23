@@ -23,5 +23,7 @@ static void reboot(rt_uint8_t argc, char **argv)
 }
 FINSH_FUNCTION_EXPORT_ALIAS(reboot, __cmd_reboot, Reboot System);
 
+
+
 #endif /* RT_USING_FINSH */
 
